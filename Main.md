@@ -79,5 +79,37 @@ otherService(result);
 
 Lets create method that can do it for us:
 
+```java
+    <T1, T2, T3> T3 combine1(T1 input, Function<T1, T2> f1, Function<T2, T3> f2) {
+        T2 value1 = f1.apply(input);
+        if (value1 == null) {
+            return null;
+        }
+        T3 value2 = f2.apply(value1);
+        return value2;
+    }
+```
 
-void combine(Function<)
+Now we can use it like this:
+
+```java
+        combine1(
+                1,
+                x -> service1(x),
+                x -> service2(x)
+        );
+```
+
+Looks better, it will return null if any of service1 or service2 return null.
+Unfortuantely if we have more then two service in our chain we get ugly results:
+
+```java
+        combine1(
+                1,
+                x -> service1(x),
+                x -> combine1(x,
+                        y -> service2(y),
+                        y -> service3(y)
+                )
+        );
+```
