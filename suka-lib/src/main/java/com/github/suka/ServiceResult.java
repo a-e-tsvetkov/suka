@@ -31,10 +31,6 @@ public class ServiceResult<S, F> {
         return new ServiceResult<>(State.FAILURE, null, failure);
     }
 
-    public static <S> Supplier<ServiceResult<S, Void>> lift(Supplier<S> f) {
-        return () -> ok(f.get());
-    }
-
     public static <S, NS, F> Function<S, ServiceResult<NS, F>> lift(Function<S, NS> f) {
         return v -> ok(f.apply(v));
     }
@@ -46,15 +42,11 @@ public class ServiceResult<S, F> {
         );
     }
 
-    public ServiceResult<S, F> validate(Function<S, Boolean> f, F error) {
-        return andThen(
-                success -> {
-                    if (f.apply(success)) {
-                        return this;
-                    } else {
-                        return fail(error);
-                    }
-                });
+    public ServiceResult<S, F> recover(Function<F, ServiceResult<S, F>> f) {
+        return to(
+                success -> this,
+                f
+        );
     }
 
     private <T> T to(Function<S, T> s, Function<F, T> f) {
@@ -87,6 +79,15 @@ public class ServiceResult<S, F> {
                 f,
                 ServiceResult::fail
         );
+    }
+
+    public ServiceResult<S, F> onSuccess(Consumer<S> f) {
+        switch (state) {
+            case SUCCESS:
+                f.accept(success);
+                break;
+        }
+        return this;
     }
 
     public ServiceResult<S, F> onFailure(Consumer<F> f) {

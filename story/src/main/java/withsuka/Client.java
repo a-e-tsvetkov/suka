@@ -1,7 +1,7 @@
 package withsuka;
 
-import com.github.suka.Block;
 import com.github.suka.ServiceResult;
+import com.github.suka.ext.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -11,24 +11,6 @@ public class Client {
     private ServiceB serviceB = new ServiceB();
     private ServiceC serviceC = new ServiceC();
     private ServiceLog serviceLog = new ServiceLog();
-
-    public void usageClassic() {
-        ServiceResult<String, Void> data = serviceA.loadData();
-        if (data.isFailure()) {
-            data = serviceA.loadBackupData();
-        }
-        if (data.isFailure()) {
-            serviceLog.logError("Unable to load");
-        }
-        ServiceResult<Integer, String> processedData = serviceB.processData(data.getSuccess());
-        if (processedData.isFailure()) {
-            serviceLog.logError(processedData.getFailure());
-        }
-        ServiceResult<Void, String> storeResult = serviceC.store(processedData.getSuccess());
-        if (storeResult.isFailure()) {
-            serviceLog.logError(storeResult.getFailure());
-        }
-    }
 
     public void usage() {
         serviceA.loadData()
@@ -41,45 +23,32 @@ public class Client {
 
     public void usageIntegration() {
         serviceA.loadData()
-                .recover(ServiceResult.lift(serviceA::loadBackupOldStyle))
+                .recover(Integration.lift(serviceA::loadBackupOldStyle))
                 //We have to provide error value
-                .validate(ServiceResult::notNull, null)
+                .andThen(Validator.notNull(null))
                 .mapFailure(ignore -> "Unable to load")
-                .andThen(x -> serviceB.processData(x)
-                        .recover(() -> serviceB.processDataIfFail(x)))
+                .andThen(Integration.lift(serviceB::processDataOldStyle))
                 .andThen(serviceC::store)
                 .onFailure(serviceLog::logError);
     }
 
-    public void usageIntegrationButMoreDeclarative() {
+    public void usageTry() {
         serviceA.loadData()
                 .mapFailure(ignore -> "Unable to load")
-                .andThen(Block.<String, Integer, String>performWithRecover()
+                .andThen(Try.of(serviceB::processDataOldStyle)
+                        .mapFailure(Throwable::getMessage))
+                .andThen(serviceC::store)
+                .onFailure(serviceLog::logError);
+    }
+
+    public void usageWithRecover() {
+        serviceA.loadData()
+                .mapFailure(ignore -> "Unable to load")
+                .andThen(DoWithRecovery.<String, Integer, String>newBlock()
                         .perform(serviceB::processData)
                         .recover(serviceB::processDataIfFail))
                 .andThen(serviceC::store)
                 .onFailure(serviceLog::logError);
-    }
-
-    public void usageTwoSource() {
-        class U {
-            private ServiceResult<Tuple, Void> loadBoth() {
-                ServiceResult<String, Void> data1 = serviceA.loadData();
-                if (data1.isFailure()) {
-                    return ServiceResult.fail(data1.getFailure());
-                }
-                ServiceResult<Double, Void> data2 = serviceA.loadData2();
-                if (data2.isFailure()) {
-                    return ServiceResult.fail(data2.getFailure());
-                }
-                return ServiceResult.ok(new Tuple(data1.getSuccess(), data2.getSuccess()));
-            }
-        }
-        var u = new U();
-        u.loadBoth()
-                .mapFailure(ignore -> "Unable to load")
-                .andThen(x -> serviceB.processMultipleData(x.data1, x.data2))
-                .andThen(serviceC::store);
     }
 
     public void usageTwoSourceButItIsUgly() {
@@ -89,30 +58,9 @@ public class Client {
                                 .andThen(data2 ->
                                         ServiceResult.ok(new Tuple(data1, data2)))
                 )
-
                 .mapFailure(ignore -> "Unable to load")
                 .andThen(x -> serviceB.processMultipleData(x.data1, x.data2))
                 .andThen(serviceC::store);
-    }
-
-    public void usageTwoSourceButNowImplementationIsUgly() {
-        Block.<Void>multipleSource()
-                .source(serviceA::loadData)
-                .source(serviceA::loadData2)
-                .combine(Tuple::new)
-                .mapFailure(ignore -> "Unable to load")
-                .andThen(x -> serviceB.processMultipleData(x.getData1(), x.getData2()))
-                .andThen(serviceC::store);
-
-        Block
-                .MultipleSource<Void>
-                .Entry1<String>
-                .Entry2<Double> tmp
-                =
-                Block.<Void>multipleSource()
-                        .source(serviceA::loadData)
-                        .source(serviceA::loadData2);
-
     }
 
     public void usageWhatIf() {
@@ -131,9 +79,8 @@ public class Client {
     public void usageWhatIfButWithDeclarativeStyle() {
         serviceA.loadData()
                 .mapFailure(ignore -> "Unable to load")
-                .andThen(Block.<String>condition()
+                .andThen(SwitchBlock.<String>newBlock()
                         .inCase(x -> x.startsWith("1"), serviceB::processData)
-                        .inCase(x -> x.endsWith("2"), serviceB::processData)
                         .otherwise(serviceB::processData2)
                 )
                 .andThen(serviceC::store);

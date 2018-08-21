@@ -1,6 +1,6 @@
 # suka
 
-Small article about kiping boilerplate code separate from nusiness code
+Small article about keeping boilerplate code separate from business code.
 
 Also library as proof of concept.
 

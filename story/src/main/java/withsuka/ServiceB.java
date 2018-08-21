@@ -12,6 +12,10 @@ public class ServiceB {
         }
     }
 
+    public Integer processDataOldStyle(String input) {
+        return Integer.parseInt(input);
+    }
+
     public ServiceResult<Integer, String> processData2(String input) {
         try {
             int result = Integer.parseInt(input.replace("0", "9"));
