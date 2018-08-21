@@ -12,7 +12,7 @@ public abstract class Client {
 
     abstract Date service3(Double i);
 
-    <T1, T2, T3> T3 combine1(T1 input, Function<T1, T2> f1, Function<T2, T3> f2) {
+    <T1, T2, T3> T3 combine(T1 input, Function<T1, T2> f1, Function<T2, T3> f2) {
         T2 value1 = f1.apply(input);
         if (value1 != null) {
             return f2.apply(value1);
@@ -22,7 +22,7 @@ public abstract class Client {
     }
 
     void use1() {
-        combine1(
+        combine(
                 1,
                 x -> service1(x),
                 x -> service2(x)
@@ -30,10 +30,10 @@ public abstract class Client {
     }
 
     void use1_with3call() {
-        combine1(
+        combine(
                 1,
                 x -> service1(x),
-                x -> combine1(x,
+                x -> combine(x,
                         y -> service2(y),
                         y -> service3(y)
                 )

@@ -1,6 +1,6 @@
 # suka
 
-Small article about keeping boilerplate code separate from business code.
+Small [article](https://github.com/a-e-tsvetkov/suka/blob/master/Main.md) about keeping boilerplate code separate from business code.
 
 Also library as proof of concept.
 

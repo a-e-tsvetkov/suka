@@ -1,6 +1,6 @@
 # Divide and conquer
 
-**Why we are here?**
+#### Why we are here?
 
 Most of the code in our applications is following one pattern.
 It invoke service to load data, process it and store results.
@@ -29,7 +29,7 @@ If you never need to handle errors or add audit you can stop reading here, folow
 
 In case your want to see my solution or just curiouse welcome aboard.
 
-**No exception**
+#### No exception
 
 While exceptions definitely do the job they have some disadvantages:
  * They did not checked by compiler unless it checked exception
@@ -39,7 +39,7 @@ While exceptions definitely do the job they have some disadvantages:
  
  So I decide to find a way to be able to signal about failure without using exceptions. 
 
-**Good old `if(...){return;}`**
+#### Good old `if(...){return;}`
 
 Simplest way to achieve desired behaviour will be handle each possible failure.
 
@@ -77,7 +77,7 @@ I slightly extended our busness logic by adding fallback to second data source a
 As you can see from 17 line of code only 4 is buseness logic and 3 is audit.
 How can we improve that and get rid of boiler plate code?
 
-**Extracting common code**
+#### Extracting common code
 
 All this code is full of same pattern:
 
@@ -92,7 +92,7 @@ otherService(result);
 Lets create method that can do it for us:
 
 ```java
-    <T1, T2, T3> T3 combine1(T1 input, Function<T1, T2> f1, Function<T2, T3> f2) {
+    <T1, T2, T3> T3 combine(T1 input, Function<T1, T2> f1, Function<T2, T3> f2) {
         T2 value1 = f1.apply(input);
         if (value1 != null) {
             return f2.apply(value1);
@@ -105,7 +105,7 @@ Lets create method that can do it for us:
 Now we can use it following way:
 
 ```java
-        combine1(
+        combine(
                 1,
                 x -> service1(x),
                 x -> service2(x)
@@ -116,10 +116,10 @@ Looks better, it will return `null` if any of service1 or service2 return `null`
 Unfortunately if we have more then two service in our chain we get ugly results:
 
 ```java
-        combine1(
+        combine(
                 1,
                 x -> service1(x),
-                x -> combine1(x,
+                x -> combine(x,
                         y -> service2(y),
                         y -> service3(y)
                 )
@@ -128,7 +128,7 @@ Unfortunately if we have more then two service in our chain we get ugly results:
 
 Another problem with this approach is that we can't have any error details.
 
-**Wrap it**
+#### Wrap it
 
 Lets start from later problem.
 
@@ -162,7 +162,7 @@ For convenience I added two factory methods that create successful and unsuccess
 
 ```
 
-**Doing business**
+#### Doing business
 
 Our business code is actually algorithm which can be expressed in next sentence: "Do service1 and then service2 and then service3".
 Of course we imply that if service method fails we do not want to proceed, but it is so obvious that we do not want to explain it every time.
@@ -176,7 +176,7 @@ Lets try put this in code.
 
 ```
 
-`andThen` is just our `combine` method, but now it is instance method of `ServiceResult`.
+`andThen` is just our `combine` method, but now it is instance method in `ServiceResult`.
 
 ```java
         public <NS> ServiceResult<NS, F> andThen(Function<S, ServiceResult<NS, F>> f) {
@@ -203,14 +203,14 @@ where `Err` is enum `enum Err {ERROR_CODE1}`, but it can be be more complex and 
 
 Pay attention that in `andThen` method type for failure of both service should be same, otherwise we will need to convert first failure into second one to return from method.
 
-**That's all folks**
+#### That's all folks
 
 Now we can combine services and do not worry about errors.
 
 Unfortunately this simple class is not enough to have all case covered.
 Limitation of java don't always allow us to have nice syntax when we use this approach.
 
-**Some extra stuff**
+#### Some extra stuff
 
 I added some extra methods for convenience:
  * `recover` accept function that will be called if state is `FAILURE`, result of said function will be returned
@@ -218,7 +218,7 @@ I added some extra methods for convenience:
  * `map` and `mapFailure` transforms success and failure
  * `onSuccess` and `onFailure` both consume callback functions which will be called for corresponding states
  
-**More fun stuff**
+#### More fun stuff
 
 Here some extensions that I add from my experience.
 They doesn't modify `ServiceResult` so you can modify them or create your own.
@@ -249,25 +249,25 @@ alsio it have method for cahanging failure taype
 ```
 
 
-*Integration*
+###### Integration
 
 * `lift` accept function and return function that ready to be used with `andThen`
 
 You can find example in `withsuka.Client#usageIntegration`
 
-*Try*
+###### Try
 
 * `Try.of` run supplied method and catch `RuntimeException`
 
 You can find example in `withsuka.Client#usageTry`
 
-*DoWithRecovery*
+###### DoWithRecovery
 
 * `DoWithRecovery.<FROM, TO, FAILURE>newBlock()` create block that can perform some action and have one or more recovery actions.
 
 You can find example in `withsuka.Client#usageWithRecover`
 
-*SwitchBlock*
+###### SwitchBlock
 
 This one is questionable, but I add it to show one of extra option.
 
@@ -306,7 +306,7 @@ Examples in:
  * `withsuka.Client#usageWhatIf`
  * `withsuka.Client#usageWhatIfButWithDeclarativeStyle`
 
-**Some time there is no way**
+#### Some time there is no way
 
 Unfortunately this approach have its limits.
 
@@ -327,7 +327,7 @@ For example if we need to read two source before processing we get this ugly cod
 
 I don't see how to fix that. 
 
-**Conclusion**
+#### Conclusion
 
 While this library is not production quality and not intended to be used in real life it shows one interesting approach to write business logic.
 You can borrow some idea or at least have liitle more practice with generics, lambdas and functional approach.
