@@ -2,6 +2,7 @@ package com.github.suka;
 
 
 import java.util.concurrent.Callable;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -78,6 +79,14 @@ public class ServiceResult<S, F> {
         return to(
                 f,
                 ServiceResult::fail
+        );
+    }
+
+    public <S2, NS> ServiceResult<NS, F> andAppend(
+            BiFunction<S, S2, NS> appender,
+            Function<S, ServiceResult<S2, F>> f) {
+        return andThen(
+                x -> f.apply(x).map(y -> appender.apply(x, y))
         );
     }
 
