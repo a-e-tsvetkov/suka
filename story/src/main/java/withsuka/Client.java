@@ -73,12 +73,13 @@ public class Client {
 
     public void usageTwoSourceBetter() {
         serviceA.loadData()
+                .map(T::of)
                 .andAppend(
-                        T1::appender,
+                        T::appender,
                         x -> serviceA.loadData2()
                 )
                 .andAppend(
-                        T2::appender,
+                        T::appender,
                         data1 -> serviceA.loadData3()
                 )
                 .mapFailure(ignore -> "Unable to load")

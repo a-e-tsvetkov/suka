@@ -12,4 +12,12 @@ public class T {
     public static <C1, C2, C3> T3<C1, C2, C3> of(C1 p1, C2 p2, C3 p3) {
         return T3.of(p1, p2, p3);
     }
+
+    public static <C1, C2> T2<C1, C2> appender(T1<C1> t1, C2 p2) {
+        return t1.and(p2);
+    }
+
+    public static <C1, C2, C3> T3<C1, C2, C3> appender(T2<C1, C2> t2, C3 p3) {
+        return t2.and(p3);
+    }
 }

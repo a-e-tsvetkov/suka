@@ -341,12 +341,13 @@ Or with new `andAppend` method you can do it even simpler
 
 ```java
         serviceA.loadData()
+                .map(T::of)
                 .andAppend(
-                        T1::appender,
+                        T::appender,
                         x -> serviceA.loadData2()
                 )
                 .andAppend(
-                        T2::appender,
+                        T::appender,
                         data1 -> serviceA.loadData3()
                 )
                 .mapFailure(ignore -> "Unable to load")
@@ -354,7 +355,7 @@ Or with new `andAppend` method you can do it even simpler
                 .andThen(serviceC::store);
 ```
 
-*NOTE*: you have to specify proper appender (now I miss implicit parameters from Scala).
+*NOTE*: Unfortunately there is no implicit parameters like in Scala, so we have to pass appeneder explicitly.
 
 #### If you in hurry you can multitask
 

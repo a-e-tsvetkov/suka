@@ -2,6 +2,7 @@ package com.github.suka.par;
 
 import com.github.suka.Block;
 import com.github.suka.ServiceResult;
+import com.github.suka.dt.T;
 import com.github.suka.dt.T1;
 import com.github.suka.dt.T2;
 import com.github.suka.dt.T3;
@@ -60,8 +61,9 @@ public class ParallelExecutor {
                 ServiceResult<S1, F> sr1 = (ServiceResult<S1, F>) futures.get(0).get();
                 ServiceResult<S2, F> sr2 = (ServiceResult<S2, F>) futures.get(0).get();
                 ServiceResult<S3, F> sr3 = (ServiceResult<S3, F>) futures.get(0).get();
-                return sr1.andAppend(T1::appender, ignore -> sr2)
-                        .andAppend(T2::appender, ignore -> sr3);
+                return sr1.map(T::of)
+                        .andAppend(T::appender, ignore -> sr2)
+                        .andAppend(T::appender, ignore -> sr3);
             } catch (InterruptedException e) {
                 throw new RuntimeException("Interruption of threads is not supported", e);
             } catch (ExecutionException e) {
@@ -84,7 +86,8 @@ public class ParallelExecutor {
                 ));
                 ServiceResult<S1, F> sr1 = (ServiceResult<S1, F>) futures.get(0).get();
                 ServiceResult<S2, F> sr2 = (ServiceResult<S2, F>) futures.get(0).get();
-                return sr1.andAppend(T1::appender, ignore -> sr2);
+                return sr1.map(T::of)
+                        .andAppend(T::appender, ignore -> sr2);
             } catch (InterruptedException e) {
                 throw new RuntimeException("Interruption of threads is not supported", e);
             } catch (ExecutionException e) {
