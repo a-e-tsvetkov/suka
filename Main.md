@@ -363,6 +363,7 @@ With new `ParallelExecutor` class it is easy.
 
 Here is short example:
 
+```java
         ParallelExecutor executor = ParallelExecutor.create();
 
 
@@ -379,6 +380,7 @@ Here is short example:
                                 serviceB::processData2
                         )
                 ).map(t -> t.get_1() + t.get_2());
+```
 
 This code:
 * calls `serviceA::loadData`, `serviceA::loadData2`, `serviceA::loadData3` in parallel
