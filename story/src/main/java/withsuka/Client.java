@@ -1,9 +1,8 @@
 package withsuka;
 
-import com.github.suka.ServiceResult;
+import com.github.suka.dt.T1;
+import com.github.suka.dt.T2;
 import com.github.suka.ext.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 @SuppressWarnings("unused")
 public class Client {
@@ -51,15 +50,34 @@ public class Client {
                 .onFailure(serviceLog::logError);
     }
 
-    public void usageTwoSourceButItIsUgly() {
+    public void usageTwoSource() {
         serviceA.loadData()
+                .map(T1::of)
                 .andThen(data1 ->
                         serviceA.loadData2()
-                                .andThen(data2 ->
-                                        ServiceResult.ok(new Tuple(data1, data2)))
+                                .map(data1::and)
+                )
+                .andThen(data1 ->
+                        serviceA.loadData3()
+                                .map(data1::and)
                 )
                 .mapFailure(ignore -> "Unable to load")
-                .andThen(x -> serviceB.processMultipleData(x.data1, x.data2))
+                .andThen(x -> serviceB.processMultipleData(x.get_1(), x.get_2()))
+                .andThen(serviceC::store);
+    }
+
+    public void usageTwoSourceBetter() {
+        serviceA.loadData()
+                .andAppend(
+                        T1::appender,
+                        x -> serviceA.loadData2()
+                )
+                .andAppend(
+                        T2::appender,
+                        data1 -> serviceA.loadData3()
+                )
+                .mapFailure(ignore -> "Unable to load")
+                .andThen(x -> serviceB.processMultipleData(x.get_1(), x.get_2()))
                 .andThen(serviceC::store);
     }
 
@@ -84,12 +102,5 @@ public class Client {
                         .otherwise(serviceB::processData2)
                 )
                 .andThen(serviceC::store);
-    }
-
-    @AllArgsConstructor
-    @Getter
-    private static class Tuple {
-        private final String data1;
-        private final Double data2;
     }
 }

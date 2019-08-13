@@ -147,7 +147,7 @@ Solution is trivial. We have to wrap result of our service call to class:
 
 ```
 
-NOTE: Here I use annotation `@AllArgsConstructor` from project lombok.
+*NOTE*: Here I use annotation `@AllArgsConstructor` from project lombok.
 
 For convenience I added two factory methods that create successful and unsuccessful results.
 
@@ -306,26 +306,55 @@ Examples in:
  * `withsuka.Client#usageWhatIf`
  * `withsuka.Client#usageWhatIfButWithDeclarativeStyle`
 
-#### Some time there is no way
+#### What if you need to casll several services and combine result
 
-Unfortunately this approach have its limits.
+I have handy set of tupple classes for this case.
 
-For example if we need to read two source before processing we get this ugly code:
+You can use them following way:
+
+```java
+        var t1 = T1.of(1);
+        var t2 = t1.and("2");
+        var t3 = t2.and(3.0);
+```
+
+For example if we need to read two source before processing:
 
 ```java
         serviceA.loadData()
+                .map(T1::of)
                 .andThen(data1 ->
                         serviceA.loadData2()
-                                .andThen(data2 ->
-                                        ServiceResult.ok(new Tuple(data1, data2)))
+                                .map(data1::and)
+                )
+                .andThen(data1 ->
+                        serviceA.loadData3()
+                                .map(data1::and)
                 )
                 .mapFailure(ignore -> "Unable to load")
-                .andThen(x -> serviceB.processMultipleData(x.data1, x.data2))
+                .andThen(x -> serviceB.processMultipleData(x.get_1(), x.get_2()))
                 .andThen(serviceC::store);
 
 ```
 
-I don't see how to fix that. 
+Or with new `andAppend` method you can do it even simpler
+
+```java
+        serviceA.loadData()
+                .andAppend(
+                        T1::appender,
+                        x -> serviceA.loadData2()
+                )
+                .andAppend(
+                        T2::appender,
+                        data1 -> serviceA.loadData3()
+                )
+                .mapFailure(ignore -> "Unable to load")
+                .andThen(x -> serviceB.processMultipleData(x.get_1(), x.get_2()))
+                .andThen(serviceC::store);
+```
+
+*NOTE*: you have to specify proper appender (now I miss implicit parameters from Scala).
 
 #### Conclusion
 

@@ -11,6 +11,10 @@ public class ServiceA {
         return ServiceResult.ok(42.0);
     }
 
+    public ServiceResult<Integer, Void> loadData3() {
+        return ServiceResult.ok(42);
+    }
+
     public ServiceResult<String, Void>  loadBackupData() {
         return ServiceResult.ok("backup data");
     }
