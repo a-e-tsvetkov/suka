@@ -1,8 +1,12 @@
 package withsuka;
 
+import com.github.suka.ServiceResult;
 import com.github.suka.dt.T1;
 import com.github.suka.dt.T2;
 import com.github.suka.ext.*;
+import com.github.suka.par.ParallelExecutor;
+
+import static com.github.suka.ext.Wrapper.ignoreInput;
 
 @SuppressWarnings("unused")
 public class Client {
@@ -102,5 +106,24 @@ public class Client {
                         .otherwise(serviceB::processData2)
                 )
                 .andThen(serviceC::store);
+    }
+
+    public void parallelCall() {
+        ParallelExecutor executor = ParallelExecutor.create();
+
+
+        ServiceResult<Integer, String> result = executor
+                .call(null,
+                        ignoreInput(serviceA::loadData),
+                        ignoreInput(serviceA::loadData2),
+                        ignoreInput(serviceA::loadData3)
+                ).map(t -> t.get_1() + t.get_2() + t.get_3())
+                .mapFailure(ignore -> "Error")
+                .andThen(
+                        executor.call(
+                                serviceB::processData,
+                                serviceB::processData2
+                        )
+                ).map(t -> t.get_1() + t.get_2());
     }
 }

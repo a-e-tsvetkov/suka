@@ -356,7 +356,39 @@ Or with new `andAppend` method you can do it even simpler
 
 *NOTE*: you have to specify proper appender (now I miss implicit parameters from Scala).
 
+#### If you in hurry you can multitask
+
+Sometime you need to make few long calls and you don't want to wait until first one ends before call to next.
+With new `ParallelExecutor` class it is easy.
+
+Here is short example:
+
+        ParallelExecutor executor = ParallelExecutor.create();
+
+
+        ServiceResult<Integer, String> result = executor
+                .call(null,
+                        ignoreInput(serviceA::loadData),
+                        ignoreInput(serviceA::loadData2),
+                        ignoreInput(serviceA::loadData3)
+                ).map(t -> t.get_1() + t.get_2() + t.get_3())
+                .mapFailure(ignore -> "Error")
+                .andThen(
+                        executor.call(
+                                serviceB::processData,
+                                serviceB::processData2
+                        )
+                ).map(t -> t.get_1() + t.get_2());
+
+This code:
+* calls `serviceA::loadData`, `serviceA::loadData2`, `serviceA::loadData3` in parallel
+* combines result 
+* passes combined result to `serviceB::processData`, `serviceB::processData2` in parallel
+* combines result again
+
+*NOTE*: `ignoreInput` convert `Callable<T>` to `Function<F, T>` which ignores its argument. 
+
 #### Conclusion
 
 While this library is not production quality and not intended to be used in real life it shows one interesting approach to write business logic.
-You can borrow some idea or at least have liitle more practice with generics, lambdas and functional approach.
+You can borrow some idea or at least have little more practice with generics, lambdas and functional approach.
