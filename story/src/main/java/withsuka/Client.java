@@ -1,6 +1,7 @@
 package withsuka;
 
 import com.github.suka.ServiceResult;
+import com.github.suka.dt.T;
 import com.github.suka.dt.T1;
 import com.github.suka.dt.T2;
 import com.github.suka.ext.*;
@@ -56,7 +57,7 @@ public class Client {
 
     public void usageTwoSource() {
         serviceA.loadData()
-                .map(T1::of)
+                .map(T::of)
                 .andThen(data1 ->
                         serviceA.loadData2()
                                 .map(data1::and)

@@ -1,6 +1,5 @@
 package com.github.suka.dt;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -17,6 +16,5 @@ public class T2<C1, C2> {
     public static <C1, C2, C3> T3<C1, C2, C3> appender(T2<C1, C2> t2, C3 p3) {
         return t2.and(p3);
     }
-
 }
 
