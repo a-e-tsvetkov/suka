@@ -72,14 +72,14 @@ public class Client {
 }
 ```
 
-I slightly extended our busness logic by adding fallback to second data source and explicit auditing of errors.
+I slightly extended our business logic by adding fallback to second data source and explicit auditing of errors.
 
 As you can see from 17 line of code only 4 is buseness logic and 3 is audit.
 How can we improve that and get rid of boiler plate code?
 
 #### Extracting common code
 
-All this code is full of same pattern:
+This code constantly repeats same pattern:
 
 ```java
 Result result = service();
@@ -201,7 +201,7 @@ Our service methods defined in the following way:
 
 where `Err` is enum `enum Err {ERROR_CODE1}`, but it can be be more complex and contain any specific details like message, timestamp, service name etc.
 
-Pay attention that in `andThen` method type for failure of both service should be same, otherwise we will need to convert first failure into second one to return from method.
+Please note that in `andThen` method type for failure of both service should be same, otherwise we will need to convert first failure into second one to return from method.
 
 #### That's all folks
 
@@ -240,7 +240,7 @@ it simplify signature of many methods and allow to combine two blocks into one w
     }
 ```
 
-alsio it have method for cahanging failure taype
+also it have method for changing failure type
 
 ```java
     default <NF> Block<S, D, NF> mapFailure(Function<F, NF> f) {
@@ -300,7 +300,7 @@ we can rewrite it with `SwitchBlock`
 
 ```
 
-New code doesnt simplify it mutch, but allow to combine this blocks.
+New code doesn't simplify it much, but allow to combine this blocks.
 
 Examples in:
  * `withsuka.Client#usageWhatIf`
